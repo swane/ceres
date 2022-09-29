@@ -74,3 +74,33 @@ while not rospy.is_shutdown():
 	rospy.sleep(1)
 
 ```
+## Subscribe to poses and write as csv file
+```
+#!/usr/bin/env python
+
+import rospy
+import csv
+
+from geometry_msgs.msg import PoseStamped
+
+#f = open("demofile.txt", "w")
+ef = open('points_visited.csv', mode='w') 
+ew = csv.writer(ef, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+def posecallback(msg):
+	a = msg.pose.position.x
+	b = msg.pose.position.y
+	ew.writerow([str(a), str(b)])
+
+def shutdown(self):
+	rospy.loginfo("Stopping the robot...")
+	ef.close()
+	self.cmd_vel.publish(Twist())
+
+rospy.init_node('save_poses',anonymous=False)   
+ 
+pubPose=rospy.Subscriber("/UTMposes", PoseStamped, posecallback)
+
+while not rospy.is_shutdown():   
+	rospy.sleep(0.1)
+```
+
