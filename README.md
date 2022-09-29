@@ -34,3 +34,43 @@ rosrun rqt_reconfigure rqt_reconfigure
 # Parse_send_path.py
 Reads a .kml (Google maps) and sends it as a Path topic
 
+# Send pose data
+```
+#!/usr/bin/env python
+
+import rospy
+
+
+from geometry_msgs.msg import PoseStamped
+
+
+
+def shutdown(self):
+	rospy.loginfo("Stopping the robot...")
+	self.cmd_vel.publish(Twist())
+
+rospy.init_node('test_poses',anonymous=False)
+    
+ 
+pubPose=rospy.Publisher("/UTMposes", PoseStamped, queue_size=1)
+
+x=0
+y=0
+while not rospy.is_shutdown():
+        x=x+5
+        y=y+7
+        pose = PoseStamped()
+        pose.header.stamp = rospy.Time.now()
+        pose.header.frame_id = "UTM"
+        pose.pose.position.x = x
+        pose.pose.position.y = y
+        pose.pose.position.z = 0
+
+        pose.pose.orientation.x = 0
+        pose.pose.orientation.y = 0
+        pose.pose.orientation.z = 0
+        pose.pose.orientation.w = 1
+        pubPose.publish(pose)
+	rospy.sleep(1)
+
+```
