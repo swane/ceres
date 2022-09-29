@@ -25,7 +25,7 @@ rosrun rqt_reconfigure rqt_reconfigure
       <param name="min_loop_frequency" value="100.0" />
       <remap from="setpoint" to="/setpoint" />
      </node>
-     ```
+```
      ## Topics
      - setpoint: The controller subscribes to this topic and reads std_msgs/Float64 messages. The message data element must contain the desired value of the state measurement of the controlled process.
  - state: The controller subscribes to this topic and reads std_msgs/Float64 messages. The message data element must contain the current value of the controlled plant property. The controller publishes std_msgs/Float64 messages on the control_effort topic each time it receives a message on the state topic. Thus the rate at which the plant publishes state governs the control-loop rate - the plant should publish state at the desired loop rate.
