@@ -30,3 +30,7 @@ rosrun rqt_reconfigure rqt_reconfigure
 - setpoint: The controller subscribes to this topic and reads std_msgs/Float64 messages. The message data element must contain the desired value of the state measurement of the controlled process.
 - state: The controller subscribes to this topic and reads std_msgs/Float64 messages. The message data element must contain the current value of the controlled plant property. The controller publishes std_msgs/Float64 messages on the control_effort topic each time it receives a message on the state topic. Thus the rate at which the plant publishes state governs the control-loop rate - the plant should publish state at the desired loop rate.
 - control_effort: The control_effort message data element contains the control effort to be applied to the process to drive state/data to equal setpoint/data. 
+
+# Parse_send_path.py
+Reads a .kml (Google maps) and sends it as a Path topic
+
