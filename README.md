@@ -1,5 +1,6 @@
 # ceres
 Ceres agricultural electric quadbike <br>
+[Link to Quickstart](quickstart.md)
 publish points as Paths <br>
 Path read by nav program<br>
 
