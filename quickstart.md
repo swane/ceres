@@ -20,4 +20,5 @@
 - On Pi:
 - Run ./ 4_nav_path_points.py
 - On Dell run pub_4_path_test.py
-- 
+## Publishing the paths
+![Paths](pubpaths.png)
