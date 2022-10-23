@@ -16,7 +16,10 @@ rospy.Subscriber("/CeresBuzz", Bool, buzzcallback)
 rospy.Subscriber("/CeresSquirt", Int8, squirtcallback)   
 ```
 From Arduino to ROS
-```$odos,steers,spds,lts,lns,heads,batts,errors:
-
+```
+$odos,steers,spds,lts,lns,heads,batts,errors:
+```
 To Arduino from ROS
-```s.write('$%2.1f,%2.1f,%d,%d:\r\n'%(steer,speed,buzz,squirt))
+```
+s.write('$%2.1f,%2.1f,%d,%d:\r\n'%(steer,speed,buzz,squirt))
+```
