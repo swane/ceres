@@ -12,7 +12,29 @@ from math import pi, sin, cos, tan, atan, sqrt, atan2
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Float64
 from std_msgs.msg import Int16
+from std_msgs.msg import Int8
+from std_msgs.msg import Bool
 import utm
+#from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
+
+
+
+global x
+global y
+global th
+global vx
+global vy
+global vth
+
+x = 0.0
+y = 0.0
+th = 0.0
+
+vx = 0.0
+vy = -0.0
+vth = 0.0
+
 
 
 global s
@@ -24,6 +46,11 @@ global actstr
 global head
 global speed
 global steer
+global fwdx
+fwdx=0.0
+
+L=0.69  #vehicle length in m
+
 
 lat=0
 lon=0
@@ -33,165 +60,179 @@ speed=0
 head=0
 actspd=0
 actstr=0
+buzz=0
+squirt=0
 
+newdatatoUSB=False
 
 def speedcallback(msg):
    global speed
+  
    speed=msg.data
-   #s.write('$%2.1f,%2.1f:\r\n'%(steer,speed))
+   newdatatoUSB=True
    
 
 def steercallback(msg):
     global steer
-    #print "Steer OK"
     steer=msg.data
-    #print steer
-    #s.write('$%2.1f,%2.1f:\r\n'%(steer,speed))
+    newdatatoUSB=True
    
-
+def buzzcallback(msg):
+    global buzz
+    buzz=msg.data
+    newdatatoUSB=True
+    
+def squirtcallback(msg):
+    global squirt
+    squirt=msg.data
+    newdatatoUSB=True
+    
 def twistcallback(msg):
 	global speed
 	global steer
-	L=0.69
 	steer= atan(msg.angular.z*L/msg.linear.x)*57.296
 	speed=msg.linear.x
-	print steer
-	print speed
-	#s.write('$%2.1f,%2.1f:\r\n'%(steer,speed))
-
-def read_robot(datastring):
+	newdatatoUSB=True
+    
+def read_robot(datastring):  # $odom,steerangle,act speed,lat,lonbearing
 	global s
+	global x
+	global y
+	global odo
+        global vth
+	global prevod
+        global fwdx
+
 	#print(datastring)
 	splitstring=datastring.split(",")
-	if len(splitstring)<5:
+	if len(splitstring)<7:
 		print "Error invalid input"
 		print datastring
 		s.flushInput()
 		s.flushOutput()
 		s.flush()
 	else:
-		lts,lns,heads,steers,spds=splitstring[0:5]
-		#print(lts)
-		try:
-			lat=float(lts)
-			publat.publish(lat)
-		except:
-			lat=0
-		try:
-			lon=float(lns)
-			publon.publish(lon)
-		except:
-			lon=0
-		try:
-			head=float(heads)
-			pubhead.publish(head)
-			print head
-		except:
-			head=0
-		try:
-			actspd=float(spds)
-			pubAspd.publish(actspd)
-			
-		except:
-			actspd=0
-		try:
-			actstr=float(steers)
-			pubAstr.publish(actstr)
-		except:
-			actstr=0
-		(z, e, n) = utm.LLtoUTM(23, lat,lon)
-		pubN.publish(n)
-		pubE.publish(e)
-		
-		print "Location:"
-		print(lat)
-		print(lon)
-		print(n)
-		print(e)
-	#print "Returning"
+		#lts,lns,heads,steers,spds=splitstring[0:5]
+            odos,steers,spds,lts,lns,heads,batts,errors=splitstring[0:8]
+            try:
+                odo=float(odos)
+                pubOdo.publish(odo)
+            except:
+                odo=0
+            try:
+                lat=float(lts)
+                publat.publish(lat)
+            except:
+                lat=0
+            try:
+                lon=float(lns)
+                publon.publish(lon)
+            except:
+                lon=0
+            try:
+                head=float(heads)
+                pubhead.publish(head)
+            except:
+                head=0
+            try:
+                actspd=float(spds)
+                pubAspd.publish(actspd) 
+            except:
+                actspd=0
+            try:
+                actstr=float(steers)
+                pubAstr.publish(actstr)
+            except:
+                actstr=0
+            try:
+                batt=float(batts)
+                pubBatt.publish(batt)
+            except:
+                batt=0
+            try:
+                error=float(errors)
+                pubError.publish(errors)
+            except:
+                errors=0
+ 
+		#calc thetadot from actspd and actstr (degrees, positive to the right)
+                
+		vth=(actspd/L)*tan(-actstr/57.296)
+
+
 def shutdown(self):
 	rospy.loginfo("Stopping the robot...")
 	s.close()
-ports=list(serial.tools.list_ports.comports())
-port=""
-for p in ports:
-	#print p[2]
-	if "USB" in p[2]:
-		port=p[0]
-		
-		#print "Found!"
-#arduino_ports=[
-#	p.device
-#	for p in serial.tools.list_ports.comports()
-#	print p
-	#if 'Arduino' in p.description
-#]
-#if not arduino_ports:
-#	raise IOError("No Arduino found")	
-#port = '/dev/ttyACM0'
+
+port = '/dev/ttyARD'
 #port=arduino_ports[0]
 print "Opening on port"
+
 print port
-s = serial.Serial(port,57600,timeout=1,writeTimeout=0)
-s.close()
+connect_tries = 1
+portOK = False
+
+while not portOK:
+
+    try: 
+        s = serial.Serial(port,57600,timeout=1,writeTimeout=0)
+        portOK = True
+    except:
+        print "Port " + port + " not connected  - " + str(connect_tries) + " tries"
+        time.sleep(2)
+        connect_tries = connect_tries + 1
+        
+s.close() 
 s.open()
 s.flush()
-rospy.init_node('test_Ceres_ROS',anonymous=False)
-time.sleep(4)
+rospy.init_node('Arduino_Ceres_ROS',anonymous=False)
+
+time.sleep(1)
 s.flushInput()
 s.flushOutput()
 publat=rospy.Publisher("/CeresLat", Float64, queue_size=1)
 publon=rospy.Publisher("/CeresLon", Float64, queue_size=1)
-pubN=rospy.Publisher("/CeresN", Float64, queue_size=1)
-pubE=rospy.Publisher("/CeresE", Float64, queue_size=1)
 pubhead=rospy.Publisher("/CeresHead", Float64, queue_size=1)
 pubAspd=rospy.Publisher("/CeresActSpd", Float64, queue_size=1)
 pubAstr=rospy.Publisher("/CeresActStr", Float64, queue_size=1)
+pubBatt=rospy.Publisher("/CeresBatt", Int8, queue_size=1)
+pubError=rospy.Publisher("/CeresError", Int8, queue_size=1)
+pubOdo=rospy.Publisher("/CeresOdo", Int16, queue_size=1)
 
 rospy.Subscriber("/CeresSpeed", Float64, speedcallback)
 rospy.Subscriber("/CeresSteer", Float64, steercallback)
 rospy.Subscriber("/cmd_vel", Twist, twistcallback)
-   
+rospy.Subscriber("/CeresBuzz", Bool, buzzcallback)
+rospy.Subscriber("/CeresSquirt", Int8, squirtcallback)   
 
  
 rate = rospy.Rate(10) # 10hz
-
+print "Running on Arduino"
     # spin() simply keeps python from exiting until this node is stopped
 while not rospy.is_shutdown():
-	#print "About to read"
+
 	c=""
-	while (c!='$'):
-		#print c
-		c=s.read(1)
-	try:
+        try:
+            c=s.read(1)
+        except serial.SerialException as e:
+            pass
+        if c=="$":
+	    try:
 		st=s.readline()
 		#print st
-	except serial.SerialException as e:
+	    except serial.SerialException as e:
 		#return none
 		pass
+		
 		#return none
-	else:
-		read_robot(st)
+	    
+	    read_robot(st)
 	s.flushInput()
 	s.flushOutput()
 	s.flush()
-	try:
-		s.write('$%2.1f,%2.1f:'%(steer,speed))
-		s.flush()
-	except serial.SerialException as e:
-		#return none
-		pass
-		#return none
-	
-	#print "Sending"
-	#print steer
-	#print "Read"
-	#print(st)
-	
-	#print lat
-
-	rospy.sleep(0.1)
-	#rospy.spin()
+	if newdatatoUSB==True:
+            s.write('$%2.1f,%2.1f,%d,%d:\r\n'%(steer,speed,buzz,squirt))
+            newdatatoUSB=False
 
             
 
