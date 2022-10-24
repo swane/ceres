@@ -9,3 +9,4 @@ Ceres agricultural electric quadbike <br>
 [Node Red Integration](https://github.com/swane/ceres/blob/master/node_red_integration.md) <br>
 [Navigation](https://github.com/swane/ceres/blob/master/navigation.md) <br>
 [Topics](https://github.com/swane/ceres/blob/master/topics.md) <br>
+[Battery](https://github.com/swane/ceres/blob/master/battery.md) <br>
