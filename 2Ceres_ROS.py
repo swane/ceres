@@ -14,6 +14,9 @@ from std_msgs.msg import Float64
 from std_msgs.msg import Int16
 from std_msgs.msg import Int8
 from std_msgs.msg import Bool
+
+from fixposition_driver.msg import Speed
+
 import utm
 #from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Point, Pose, Quaternion, Twist, Vector3
@@ -38,26 +41,18 @@ vth = 0.0
 
 
 global s
-global lat
-global lon
-global head
 global actspd
 global actstr
-global head
-global speed
+global velocity
 global steer
 global fwdx
 fwdx=0.0
 
 L=0.69  #vehicle length in m
 
-
-lat=0
-lon=0
-bear=0
 steer=0
-speed=0
-head=0
+velocity=0
+
 actspd=0
 actstr=0
 buzz=0
@@ -65,36 +60,40 @@ squirt=0
 
 newdatatoUSB=False
 
-def speedcallback(msg):
-   global speed
-  
-   speed=msg.data
+def velocitycallback(msg):
+   global velocity
+   global newdatatoUSB
+   velocity=msg.data
    newdatatoUSB=True
    
 
 def steercallback(msg):
     global steer
+    global newdatatoUSB
     steer=msg.data
     newdatatoUSB=True
    
 def buzzcallback(msg):
     global buzz
+    global newdatatoUSB
     buzz=msg.data
     newdatatoUSB=True
     
 def squirtcallback(msg):
     global squirt
+    global newdatatoUSB
     squirt=msg.data
     newdatatoUSB=True
     
 def twistcallback(msg):
-	global speed
+	global velocity
 	global steer
-	steer= atan(msg.angular.z*L/msg.linear.x)*57.296
-	speed=msg.linear.x
+        global newdatatoUSB
+	steer= atan(-msg.angular.z*L/msg.linear.x)*57.296
+	velocity=msg.linear.x
 	newdatatoUSB=True
     
-def read_robot(datastring):  # $odom,steerangle,act speed,lat,lonbearing
+def read_robot(datastring):  # $odom,steerangle,act velocity,lat,lonbearing
 	global s
 	global x
 	global y
@@ -105,40 +104,32 @@ def read_robot(datastring):  # $odom,steerangle,act speed,lat,lonbearing
 
 	#print(datastring)
 	splitstring=datastring.split(",")
-	if len(splitstring)<7:
+	if len(splitstring)<5:
 		print "Error invalid input"
 		print datastring
 		s.flushInput()
 		s.flushOutput()
 		s.flush()
 	else:
-		#lts,lns,heads,steers,spds=splitstring[0:5]
-            odos,steers,spds,lts,lns,heads,batts,errors=splitstring[0:8]
+		
+            odos,steers,spds,batts,errors=splitstring[0:5]
             try:
                 odo=float(odos)
                 pubOdo.publish(odo)
             except:
                 odo=0
-            try:
-                lat=float(lts)
-                publat.publish(lat)
-            except:
-                lat=0
-            try:
-                lon=float(lns)
-                publon.publish(lon)
-            except:
-                lon=0
-            try:
-                head=float(heads)
-                pubhead.publish(head)
-            except:
-                head=0
+            
             try:
                 actspd=float(spds)
-                pubAspd.publish(actspd) 
+                pubAspd.publish(actspd)
+                speeds=[0] # can be for each wheel, so is  list
+                speeds[0] = int(actspd*1000)
+                fixposition_speed.publish(speeds)
+                #print(speeds[0])
+
             except:
                 actspd=0
+                
             try:
                 actstr=float(steers)
                 pubAstr.publish(actstr)
@@ -190,18 +181,17 @@ rospy.init_node('Arduino_Ceres_ROS',anonymous=False)
 time.sleep(1)
 s.flushInput()
 s.flushOutput()
-publat=rospy.Publisher("/CeresLat", Float64, queue_size=1)
-publon=rospy.Publisher("/CeresLon", Float64, queue_size=1)
-pubhead=rospy.Publisher("/CeresHead", Float64, queue_size=1)
 pubAspd=rospy.Publisher("/CeresActSpd", Float64, queue_size=1)
 pubAstr=rospy.Publisher("/CeresActStr", Float64, queue_size=1)
 pubBatt=rospy.Publisher("/CeresBatt", Int8, queue_size=1)
 pubError=rospy.Publisher("/CeresError", Int8, queue_size=1)
 pubOdo=rospy.Publisher("/CeresOdo", Int16, queue_size=1)
 
-rospy.Subscriber("/CeresSpeed", Float64, speedcallback)
-rospy.Subscriber("/CeresSteer", Float64, steercallback)
-rospy.Subscriber("/cmd_vel", Twist, twistcallback)
+fixposition_speed=rospy.Publisher("/fixposition/speed", Speed, queue_size=1)
+
+#rospy.Subscriber("/CeresSpeed", Float64, velocitycallback)
+#rospy.Subscriber("/CeresSteer", Float64, steercallback)
+rospy.Subscriber("/yocs_cmd_vel/output/cmd_vel", Twist, twistcallback)
 rospy.Subscriber("/CeresBuzz", Bool, buzzcallback)
 rospy.Subscriber("/CeresSquirt", Int8, squirtcallback)   
 
@@ -231,7 +221,9 @@ while not rospy.is_shutdown():
 	s.flushOutput()
 	s.flush()
 	if newdatatoUSB==True:
-            s.write('$%2.1f,%2.1f,%d,%d:\r\n'%(steer,speed,buzz,squirt))
+	    print "Sending"
+	    print ('$%2.1f,%2.1f,%d,%d:\r\n'%(steer,velocity,buzz,squirt))
+            s.write('$%2.1f,%2.1f,%d,%d:\r\n'%(steer,velocity,buzz,squirt))
             newdatatoUSB=False
 
             
