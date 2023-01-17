@@ -24,7 +24,10 @@
 - On Pi, Navigate to catkin_ws/src/ceres/src and run 2ceres_ros.py (./2Ceres_Ros)
 - On Pi run ./test_steer_pub.py to test steering
 - Stop the test_steer_pub.py
+- roslaunch yocs_cmd_vel_mux standalone.launch
+- Test with 'send_yocs.py' then stop, thi tests the multiplexor (keyboard or nav input)
 - On Pi:
+- Run ./navigator.py
 - Run ./ 4_nav_path_points.py
 - On Dell run pub_4_path_test.py
 ## Publishing the paths
