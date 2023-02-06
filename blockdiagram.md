@@ -1,5 +1,5 @@
 # Roadmap
-![Roadmap](/ceres_roadmap.png)
+![Roadmap](/ceres_roadmap.JPG)
 # Arduino Block diagram
 ![Arduino](/CeresArduino.png)
 <br>
