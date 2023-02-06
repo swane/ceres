@@ -1,0 +1,6 @@
+To change the settings of TCP (IP, Port) or Serial (Baudrate, Port) connections, check the launch/tcp.yaml and launch/serial.yaml files.
+
+
+roslaunch fixposition_driver tcp.launch
+
+https://github.com/fixposition/fixposition_driver

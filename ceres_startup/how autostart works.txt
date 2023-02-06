@@ -1,0 +1,9 @@
+/home/pi/.config/lxsession/LXDE-pi/autostart
+
+
+add this line to the end:
+
+@lxterminal --command /home/pi/Desktop/ceres_startup/launch.sh
+
+
+That shell script will run at power on. Make sure is executable.
