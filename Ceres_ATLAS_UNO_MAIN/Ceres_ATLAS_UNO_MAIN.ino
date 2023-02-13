@@ -69,9 +69,9 @@ double steer_i = 0.1;
 double steer_d = 1.0;
 
 //PID Speed
-double ks = 25;
+double ks = 30;
 double kis = 10;
-double kds = 1;
+double kds = 0;
 //Variables
 //Global variables to send to PC
 //From Radio transmitter
@@ -707,12 +707,13 @@ void Speed(double sp)
   //  Serial.print("error:");Serial.println(error);
   //PID
   //spd2=spd2+ error*5;//
-  //if (sp >= 0)spd2=Speed_PID(ks,kis,kds,error,false);
-  spd2 = sp * 255;
+  spd2=Speed_PID(ks,kis,kds,error,false);
+  //spd2 = sp * 255;
   if (spd2 > 255) spd2 = 255;
   spp = spd2;
   if (spp < 0) spp = 0;
   spdb = (byte) spp;
+  //Serial.print("Speed:");Serial.print(wheelspeed);Serial.print("  PWM:");Serial.println(spdb); //Testing PID
   //Serial.print("wheel:");  Serial.print(wheelspeed);Serial.print("sp:");  Serial.print(sp);Serial.print("error:");  Serial.print(error);
   //  Serial.print("spdb:");  Serial.print(spdb); Serial.print("spd2:");Serial.println(spd2);
 
@@ -895,6 +896,7 @@ void loop()
 
   if (!RC_control)  //Serial data defines steer and speed
   {
+    //Comment out below to test PID
     if (((millis() - pc_watchdog_drive) > PC_WATCHDOG_TIME) )  //Time out
     {
       motor_driver_speed = 0;
@@ -959,6 +961,9 @@ void loop()
     prevwheel = wheele;
     calcspeed = millis(); //zero_wheel()
     //Serial.println(wheelspeed);
+            stringOne = "IN:ST:" + String(motor_driver_steer, 0) + " SP:" + String(motor_driver_speed, 1);
+        //stringTwo = "AC:ST:" + String(current_angle, 0) + " SP:" + String(wheelspeed, 1);
+        stringTwo = "W:" + String((wheel*wheel_ppd),2)+ ", S:"+String(wheelspeed, 1);
   }
 
   if ((millis() - led_drive) > LED_FLASH)
@@ -1014,8 +1019,8 @@ void loop()
       }
     }
 
-    Steer(motor_driver_steer);//Reads the streer angle too
-
+    Steer(motor_driver_steer);//Reads the steer angle too
+//motor_driver_speed=1.0; //Used in Testing PID
     Speed(motor_driver_speed);
     motor_intrpt = millis();
   }
